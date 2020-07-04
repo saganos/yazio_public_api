@@ -1,4 +1,4 @@
-Yazio API desciption
+Yazio API description
 ============
 
 What
