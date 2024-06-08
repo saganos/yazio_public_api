@@ -1,0 +1,341 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server for Yazio API.",
+        "version": "1.0.0",
+        "title": "Yazio API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "email": "apiteam@swagger.io"
+        }
+    },
+    "host": "api.yazio.com",
+    "basePath": "/v1",
+    "tags": [
+        {
+            "name": "auth",
+            "description": "Authentication related endpoints"
+        },
+        {
+            "name": "meals",
+            "description": "Meal management endpoints"
+        },
+        {
+            "name": "nutrients",
+            "description": "Nutrient information endpoints"
+        }
+    ],
+    "schemes": [
+        "https"
+    ],
+    "paths": {
+        "/login": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "User login",
+                "description": "Login to Yazio App with username and password using OAuth2.",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Login"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful login",
+                        "schema": {
+                            "$ref": "#/definitions/AuthResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/token_refresh": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Refresh token",
+                "description": "Refreshes the authentication token.",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/TokenRefresh"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token refreshed",
+                        "schema": {
+                            "$ref": "#/definitions/AuthResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user_info": {
+            "get": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Get user info",
+                "description": "Retrieves user information.",
+                "responses": {
+                    "200": {
+                        "description": "Successful retrieval",
+                        "schema": {
+                            "$ref": "#/definitions/UserInfo"
+                        }
+                    }
+                }
+            }
+        },
+        "/share_meal": {
+            "post": {
+                "tags": [
+                    "meals"
+                ],
+                "summary": "Share meal",
+                "description": "Share saved meal with other users.",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ShareMeal"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Meal shared",
+                        "schema": {
+                            "$ref": "#/definitions/ShareMealResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/log_meal": {
+            "post": {
+                "tags": [
+                    "meals"
+                ],
+                "summary": "Log a meal",
+                "description": "Log a meal for the user.",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/LogMeal"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Meal logged",
+                        "schema": {
+                            "$ref": "#/definitions/LogMealResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/get_meals": {
+            "get": {
+                "tags": [
+                    "meals"
+                ],
+                "summary": "Get meals",
+                "description": "Retrieve meals logged by the user.",
+                "responses": {
+                    "200": {
+                        "description": "Successful retrieval",
+                        "schema": {
+                            "$ref": "#/definitions/Meals"
+                        }
+                    }
+                }
+            }
+        },
+        "/nutrients_info": {
+            "get": {
+                "tags": [
+                    "nutrients"
+                ],
+                "summary": "Get nutrient information",
+                "description": "Get detailed nutrient information.",
+                "responses": {
+                    "200": {
+                        "description": "Successful retrieval",
+                        "schema": {
+                            "$ref": "#/definitions/NutrientsInfo"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Login": {
+            "type": "object",
+            "required": [
+                "username",
+                "password"
+            ],
+            "properties": {
+                "username": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "AuthResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "TokenRefresh": {
+            "type": "object",
+            "required": [
+                "token"
+            ],
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "UserInfo": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "ShareMeal": {
+            "type": "object",
+            "required": [
+                "mealId",
+                "recipientId"
+            ],
+            "properties": {
+                "mealId": {
+                    "type": "string"
+                },
+                "recipientId": {
+                    "type": "string"
+                }
+            }
+        },
+        "ShareMealResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "LogMeal": {
+            "type": "object",
+            "required": [
+                "mealDetails"
+            ],
+            "properties": {
+                "mealDetails": {
+                    "type": "string"
+                }
+            }
+        },
+        "LogMealResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "Meals": {
+            "type": "object",
+            "properties": {
+                "meals": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Meal"
+                    }
+                }
+            }
+        },
+        "Meal": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "details": {
+                    "type": "string"
+                }
+            }
+        },
+        "NutrientsInfo": {
+            "type": "object",
+            "properties": {
+                "nutrients": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Nutrient"
+                    }
+                }
+            }
+        },
+        "Nutrient": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "amount": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "oauth2": {
+            "type": "oauth2",
+            "flow": "password",
+            "tokenUrl": "https://yzapi.yazio.com/v12/oauth/token",
+            "scopes": {}
+        }
+    },
+    "security": [
+        {
+            "oauth2": []
+        }
+    ]
+}
