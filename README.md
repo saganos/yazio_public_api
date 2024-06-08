@@ -16,6 +16,14 @@ How to install
 npm i node-fetch --save
 ```
 
+Documentation
+------------
+
+A `swagger.json` file was added. You can use the public [swagger editor](https://editor-next.swagger.io/) to paste/import it and play around.
+
+ℹ️ The OAuth part works. You can log in and retrieve a valid token.
+
+⚠️ The other endpoints won't work in the swagger UI, as long as you are playing around using the public swagger editor. The reason is that yazio has CORS security rules enabled that can only be omitted using HTTP or localhost clients. [You can use the client credentials that are posted in this repository](https://github.com/saganos/yazio_public_api/blob/master/examples/login.js).
 
 Examples:
 ------------
