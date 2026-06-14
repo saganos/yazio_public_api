@@ -1,188 +1,318 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server for Yazio API.",
-        "version": "1.0.0",
-        "title": "Yazio API",
-        "termsOfService": "http://swagger.io/terms/",
+        "description": "Community-maintained documentation of the unofficial YAZIO fitness app API (v15). YAZIO has not published an official API — this is reverse-engineered from working app traffic.",
+        "version": "15.0.0",
+        "title": "YAZIO API",
         "contact": {
-            "email": "apiteam@swagger.io"
+            "url": "https://github.com/saganos/yazio_public_api"
         }
     },
-    "host": "api.yazio.com",
-    "basePath": "/v1",
+    "host": "yzapi.yazio.com",
+    "basePath": "/v15",
     "tags": [
-        {
-            "name": "auth",
-            "description": "Authentication related endpoints"
-        },
-        {
-            "name": "meals",
-            "description": "Meal management endpoints"
-        },
-        {
-            "name": "nutrients",
-            "description": "Nutrient information endpoints"
+        { "name": "auth",     "description": "Authentication — obtain and refresh access tokens" },
+        { "name": "user",     "description": "User profile and account information" },
+        { "name": "products", "description": "Food product search and detail" },
+        { "name": "diary",    "description": "User food diary (consumed items)" },
+        { "name": "summary",  "description": "Daily nutrition summary widgets" },
+        { "name": "water",    "description": "Water intake tracking" },
+        { "name": "exercises",  "description": "User exercise and training log" },
+        { "name": "goals",      "description": "User nutrition and activity goals" },
+        { "name": "settings",   "description": "User app settings and preferences" },
+        { "name": "bodyvalues", "description": "Body measurements (weight, etc.)" }
+    ],
+    "schemes": ["https"],
+    "securityDefinitions": {
+        "oauth2": {
+            "type": "oauth2",
+            "flow": "password",
+            "tokenUrl": "https://yzapi.yazio.com/v15/oauth/token",
+            "scopes": {}
         }
-    ],
-    "schemes": [
-        "https"
-    ],
+    },
     "paths": {
-        "/login": {
+        "/oauth/token": {
             "post": {
-                "tags": [
-                    "auth"
-                ],
-                "summary": "User login",
-                "description": "Login to Yazio App with username and password using OAuth2.",
+                "tags": ["auth"],
+                "summary": "Obtain or refresh an access token",
+                "description": "Use grant_type=password to log in, or grant_type=refresh_token to renew an existing session. Request body must be application/x-www-form-urlencoded.",
+                "consumes": ["application/x-www-form-urlencoded"],
                 "parameters": [
-                    {
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/Login"
-                        }
-                    }
+                    { "name": "grant_type",    "in": "formData", "required": true,  "type": "string", "enum": ["password", "refresh_token"] },
+                    { "name": "client_id",     "in": "formData", "required": true,  "type": "string" },
+                    { "name": "client_secret", "in": "formData", "required": true,  "type": "string" },
+                    { "name": "username",      "in": "formData", "required": false, "type": "string", "description": "Required when grant_type is password" },
+                    { "name": "password",      "in": "formData", "required": false, "type": "string", "description": "Required when grant_type is password" },
+                    { "name": "refresh_token", "in": "formData", "required": false, "type": "string", "description": "Required when grant_type is refresh_token" }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful login",
-                        "schema": {
-                            "$ref": "#/definitions/AuthResponse"
-                        }
+                        "description": "Access token issued",
+                        "schema": { "$ref": "#/definitions/AuthResponse" }
                     }
                 }
             }
         },
-        "/token_refresh": {
-            "post": {
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Refresh token",
-                "description": "Refreshes the authentication token.",
-                "parameters": [
-                    {
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/TokenRefresh"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Token refreshed",
-                        "schema": {
-                            "$ref": "#/definitions/AuthResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/user_info": {
+        "/user": {
             "get": {
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Get user info",
-                "description": "Retrieves user information.",
+                "tags": ["user"],
+                "summary": "Get user profile",
+                "description": "Returns the authenticated user's account and preference data.",
+                "security": [{ "oauth2": [] }],
                 "responses": {
                     "200": {
-                        "description": "Successful retrieval",
+                        "description": "User profile",
+                        "schema": { "$ref": "#/definitions/UserInfo" }
+                    }
+                }
+            }
+        },
+        "/products/search": {
+            "get": {
+                "tags": ["products"],
+                "summary": "Search food products",
+                "security": [{ "oauth2": [] }],
+                "parameters": [
+                    { "name": "query",     "in": "query", "required": true,  "type": "string", "description": "Search term" },
+                    { "name": "sex",       "in": "query", "required": false, "type": "string", "enum": ["male", "female"] },
+                    { "name": "countries", "in": "query", "required": false, "type": "string", "description": "ISO 3166-1 alpha-2 country code, e.g. DE" },
+                    { "name": "locales",   "in": "query", "required": false, "type": "string", "description": "IETF locale tag, e.g. de_DE" }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of matching products",
                         "schema": {
-                            "$ref": "#/definitions/UserInfo"
+                            "type": "array",
+                            "items": { "$ref": "#/definitions/SearchResult" }
                         }
                     }
                 }
             }
         },
-        "/share_meal": {
-            "post": {
-                "tags": [
-                    "meals"
+        "/products/{id}": {
+            "get": {
+                "tags": ["products"],
+                "summary": "Get product details",
+                "security": [{ "oauth2": [] }],
+                "parameters": [
+                    { "name": "id", "in": "path", "required": true, "type": "string" }
                 ],
-                "summary": "Share meal",
-                "description": "Share saved meal with other users.",
+                "responses": {
+                    "200": {
+                        "description": "Product detail",
+                        "schema": { "$ref": "#/definitions/ProductDetail" }
+                    }
+                }
+            }
+        },
+        "/user/consumed-items": {
+            "get": {
+                "tags": ["diary"],
+                "summary": "Get diary entries for a date",
+                "security": [{ "oauth2": [] }],
+                "parameters": [
+                    { "name": "date", "in": "query", "required": true, "type": "string", "format": "date", "description": "e.g. 2024-01-15" }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Consumed items for the day",
+                        "schema": {
+                            "type": "array",
+                            "items": { "$ref": "#/definitions/ConsumedItem" }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": ["diary"],
+                "summary": "Add items to diary",
+                "security": [{ "oauth2": [] }],
+                "consumes": ["application/json"],
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": { "$ref": "#/definitions/ConsumedItemsRequest" }
+                    }
+                ],
+                "responses": {
+                    "200": { "description": "Items logged successfully" }
+                }
+            },
+            "delete": {
+                "tags": ["diary"],
+                "summary": "Delete diary entries by ID",
+                "security": [{ "oauth2": [] }],
+                "consumes": ["application/json"],
                 "parameters": [
                     {
                         "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/ShareMeal"
+                            "type": "array",
+                            "items": { "type": "string" },
+                            "description": "Array of consumed-item IDs to delete"
                         }
                     }
                 ],
                 "responses": {
+                    "200": { "description": "Items deleted successfully" }
+                }
+            }
+        },
+        "/user/widgets/daily-summary": {
+            "get": {
+                "tags": ["summary"],
+                "summary": "Get daily nutrition summary",
+                "security": [{ "oauth2": [] }],
+                "parameters": [
+                    { "name": "date", "in": "query", "required": true, "type": "string", "format": "date" }
+                ],
+                "responses": {
                     "200": {
-                        "description": "Meal shared",
-                        "schema": {
-                            "$ref": "#/definitions/ShareMealResponse"
-                        }
+                        "description": "Daily nutrition summary",
+                        "schema": { "$ref": "#/definitions/DailySummary" }
                     }
                 }
             }
         },
-        "/log_meal": {
-            "post": {
-                "tags": [
-                    "meals"
+        "/user/water-intake": {
+            "get": {
+                "tags": ["water"],
+                "summary": "Get water intake for a date",
+                "security": [{ "oauth2": [] }],
+                "parameters": [
+                    { "name": "date", "in": "query", "required": true, "type": "string", "format": "date" }
                 ],
-                "summary": "Log a meal",
-                "description": "Log a meal for the user.",
+                "responses": {
+                    "200": {
+                        "description": "Water intake entries",
+                        "schema": {
+                            "type": "array",
+                            "items": { "$ref": "#/definitions/WaterIntakeEntry" }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": ["water"],
+                "summary": "Log water intake",
+                "security": [{ "oauth2": [] }],
+                "consumes": ["application/json"],
                 "parameters": [
                     {
                         "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/LogMeal"
+                            "type": "array",
+                            "items": { "$ref": "#/definitions/WaterIntakeEntry" }
                         }
                     }
                 ],
                 "responses": {
+                    "200": { "description": "Water intake logged successfully" }
+                }
+            }
+        },
+        "/user/dietary-preferences": {
+            "get": {
+                "tags": ["user"],
+                "summary": "Get dietary preferences",
+                "description": "Returns the user's dietary restriction (e.g. vegetarian, vegan).",
+                "security": [{ "oauth2": [] }],
+                "responses": {
                     "200": {
-                        "description": "Meal logged",
-                        "schema": {
-                            "$ref": "#/definitions/LogMealResponse"
-                        }
+                        "description": "Dietary preferences",
+                        "schema": { "$ref": "#/definitions/UserDietaryPreferences" }
                     }
                 }
             }
         },
-        "/get_meals": {
+        "/user/exercises": {
             "get": {
-                "tags": [
-                    "meals"
+                "tags": ["exercises"],
+                "summary": "Get exercises for a date",
+                "description": "Returns training and custom_training entries logged by the user for a specific day.",
+                "security": [{ "oauth2": [] }],
+                "parameters": [
+                    { "name": "date", "in": "query", "required": true, "type": "string", "format": "date", "description": "e.g. 2024-01-15" }
                 ],
-                "summary": "Get meals",
-                "description": "Retrieve meals logged by the user.",
                 "responses": {
                     "200": {
-                        "description": "Successful retrieval",
-                        "schema": {
-                            "$ref": "#/definitions/Meals"
-                        }
+                        "description": "Exercise entries",
+                        "schema": { "$ref": "#/definitions/UserExercisesResponse" }
                     }
                 }
             }
         },
-        "/nutrients_info": {
+        "/user/goals/unmodified": {
             "get": {
-                "tags": [
-                    "nutrients"
+                "tags": ["goals"],
+                "summary": "Get user goals for a date",
+                "description": "Returns calorie, macro, water, step, and weight goals for the specified day.",
+                "security": [{ "oauth2": [] }],
+                "parameters": [
+                    { "name": "date", "in": "query", "required": true, "type": "string", "format": "date", "description": "e.g. 2024-01-15" }
                 ],
-                "summary": "Get nutrient information",
-                "description": "Get detailed nutrient information.",
                 "responses": {
                     "200": {
-                        "description": "Successful retrieval",
+                        "description": "User goals",
+                        "schema": { "$ref": "#/definitions/UserGoals" }
+                    }
+                }
+            }
+        },
+        "/user/settings": {
+            "get": {
+                "tags": ["settings"],
+                "summary": "Get user settings",
+                "description": "Returns boolean feature flags for trackers, reminders, and other app settings.",
+                "security": [{ "oauth2": [] }],
+                "responses": {
+                    "200": {
+                        "description": "User settings",
+                        "schema": { "$ref": "#/definitions/UserSettings" }
+                    }
+                }
+            }
+        },
+        "/user/bodyvalues/weight/last": {
+            "get": {
+                "tags": ["bodyvalues"],
+                "summary": "Get last weight entry",
+                "description": "Returns the most recent weight entry for the user on or before the given date, or null if none exists.",
+                "security": [{ "oauth2": [] }],
+                "parameters": [
+                    { "name": "date", "in": "query", "required": true, "type": "string", "format": "date", "description": "e.g. 2024-01-15" }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Weight entry or null",
+                        "schema": { "$ref": "#/definitions/UserWeight" }
+                    }
+                }
+            }
+        },
+        "/user/products/suggested": {
+            "get": {
+                "tags": ["products"],
+                "summary": "Get suggested products for a meal slot",
+                "description": "Returns products suggested for the user based on their history for a specific date and meal (daytime).",
+                "security": [{ "oauth2": [] }],
+                "parameters": [
+                    { "name": "date",    "in": "query", "required": true, "type": "string", "format": "date", "description": "e.g. 2024-01-15" },
+                    { "name": "daytime", "in": "query", "required": true, "type": "string", "enum": ["breakfast", "lunch", "dinner", "snack"], "description": "Meal slot to get suggestions for" }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Suggested products",
                         "schema": {
-                            "$ref": "#/definitions/NutrientsInfo"
+                            "type": "array",
+                            "items": { "$ref": "#/definitions/UserSuggestedProduct" }
                         }
                     }
                 }
@@ -190,152 +320,223 @@
         }
     },
     "definitions": {
-        "Login": {
-            "type": "object",
-            "required": [
-                "username",
-                "password"
-            ],
-            "properties": {
-                "username": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
         "AuthResponse": {
             "type": "object",
             "properties": {
-                "token": {
-                    "type": "string"
-                }
-            }
-        },
-        "TokenRefresh": {
-            "type": "object",
-            "required": [
-                "token"
-            ],
-            "properties": {
-                "token": {
-                    "type": "string"
-                }
+                "access_token":  { "type": "string" },
+                "token_type":    { "type": "string", "example": "bearer" },
+                "expires_in":    { "type": "integer", "example": 172800, "description": "Token lifetime in seconds" },
+                "refresh_token": { "type": "string" }
             }
         },
         "UserInfo": {
             "type": "object",
             "properties": {
-                "id": {
-                    "type": "string"
+                "email":                      { "type": "string" },
+                "first_name":                 { "type": "string" },
+                "last_name":                  { "type": "string" },
+                "sex":                        { "type": "string" },
+                "date_of_birth":              { "type": "string", "example": "1983-05-06" },
+                "body_height":                { "type": "number" },
+                "start_weight":               { "type": "number" },
+                "goal":                       { "type": "string", "example": "lose" },
+                "is_premium":                 { "type": "boolean" },
+                "pal":                        { "type": "number" },
+                "locale":                     { "type": "string", "example": "en_US" },
+                "timezone_offset":            { "type": "integer" },
+                "unit_length":                { "type": "string", "example": "cm" },
+                "unit_mass":                  { "type": "string", "example": "kg" },
+                "unit_energy":                { "type": "string", "example": "kcal" },
+                "unit_glucose":               { "type": "string" },
+                "unit_serving":               { "type": "string" },
+                "registration_date":          { "type": "string" },
+                "last_active_date":           { "type": "string" },
+                "user_token":                 { "type": "string" },
+                "login_type":                 { "type": "string" },
+                "email_confirmation_status":  { "type": "string" },
+                "profile_image":              { "type": "string" },
+                "siwa_user_id":               { "type": "string" },
+                "diet": {
+                    "type": "object",
+                    "properties": {
+                        "name":               { "type": "string" },
+                        "carb_percentage":    { "type": "integer" },
+                        "fat_percentage":     { "type": "integer" },
+                        "protein_percentage": { "type": "integer" }
+                    }
+                }
+            }
+        },
+        "ProductNutrients": {
+            "type": "object",
+            "description": "Nutrient values are per gram of the product",
+            "properties": {
+                "energy.energy":    { "type": "number", "description": "Energy in kcal per gram" },
+                "nutrient.protein": { "type": "number", "description": "Protein in grams per gram" },
+                "nutrient.fat":     { "type": "number", "description": "Fat in grams per gram" },
+                "nutrient.carb":    { "type": "number", "description": "Carbohydrates in grams per gram" }
+            }
+        },
+        "ProductServing": {
+            "type": "object",
+            "properties": {
+                "serving": { "type": "string" },
+                "amount":  { "type": "number", "description": "Amount in grams" }
+            }
+        },
+        "ProductDetail": {
+            "type": "object",
+            "properties": {
+                "name":      { "type": "string" },
+                "producer":  { "type": "string" },
+                "category":  { "type": "string" },
+                "base_unit": { "type": "string" },
+                "nutrients": { "$ref": "#/definitions/ProductNutrients" },
+                "servings":  { "type": "array", "items": { "$ref": "#/definitions/ProductServing" } }
+            }
+        },
+        "SearchResult": {
+            "type": "object",
+            "properties": {
+                "product_id":       { "type": "string" },
+                "name":             { "type": "string" },
+                "producer":         { "type": "string" },
+                "serving":          { "type": "string" },
+                "serving_quantity": { "type": "number" },
+                "amount":           { "type": "number", "description": "Default serving amount in grams" },
+                "base_unit":        { "type": "string" },
+                "nutrients":        { "$ref": "#/definitions/ProductNutrients" },
+                "is_verified":      { "type": "boolean" }
+            }
+        },
+        "ConsumedItem": {
+            "type": "object",
+            "properties": {
+                "id":               { "type": "string" },
+                "product_id":       { "type": "string" },
+                "date":             { "type": "string", "example": "2024-01-15 08:30:00" },
+                "daytime":          { "type": "string", "enum": ["breakfast", "lunch", "dinner", "snack"] },
+                "amount":           { "type": "number", "description": "Amount in grams" },
+                "serving":          { "type": "string" },
+                "serving_quantity": { "type": "number" }
+            }
+        },
+        "ConsumedItemsRequest": {
+            "type": "object",
+            "properties": {
+                "products":        { "type": "array", "items": { "$ref": "#/definitions/ConsumedItem" } },
+                "recipe_portions": { "type": "array", "items": {}, "description": "Recipe portions to log (pass empty array if unused)" },
+                "simple_products": { "type": "array", "items": {}, "description": "Simple products to log (pass empty array if unused)" }
+            }
+        },
+        "DailySummary": {
+            "type": "object",
+            "description": "Daily nutrition totals and goals from the user's diary",
+            "properties": {
+                "goals": {
+                    "type": "object",
+                    "properties": {
+                        "energy.energy":    { "type": "number" },
+                        "nutrient.protein": { "type": "number" },
+                        "nutrient.fat":     { "type": "number" },
+                        "nutrient.carb":    { "type": "number" }
+                    }
                 },
-                "username": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                }
-            }
-        },
-        "ShareMeal": {
-            "type": "object",
-            "required": [
-                "mealId",
-                "recipientId"
-            ],
-            "properties": {
-                "mealId": {
-                    "type": "string"
-                },
-                "recipientId": {
-                    "type": "string"
-                }
-            }
-        },
-        "ShareMealResponse": {
-            "type": "object",
-            "properties": {
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "LogMeal": {
-            "type": "object",
-            "required": [
-                "mealDetails"
-            ],
-            "properties": {
-                "mealDetails": {
-                    "type": "string"
-                }
-            }
-        },
-        "LogMealResponse": {
-            "type": "object",
-            "properties": {
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "Meals": {
-            "type": "object",
-            "properties": {
                 "meals": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Meal"
+                    "type": "object",
+                    "properties": {
+                        "breakfast": { "type": "object", "properties": { "energy_goal": { "type": "number" } } },
+                        "lunch":     { "type": "object", "properties": { "energy_goal": { "type": "number" } } },
+                        "dinner":    { "type": "object", "properties": { "energy_goal": { "type": "number" } } },
+                        "snack":     { "type": "object", "properties": { "energy_goal": { "type": "number" } } }
                     }
                 }
             }
         },
-        "Meal": {
+        "WaterIntakeEntry": {
             "type": "object",
             "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "details": {
-                    "type": "string"
-                }
+                "date":         { "type": "string", "example": "2024-01-15 08:30:00" },
+                "water_intake": { "type": "number", "description": "Water intake in millilitres" }
             }
         },
-        "NutrientsInfo": {
+        "UserDietaryPreferences": {
             "type": "object",
             "properties": {
-                "nutrients": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Nutrient"
-                    }
-                }
+                "restriction": { "type": "string", "x-nullable": true, "example": "vegetarian", "description": "Dietary restriction label, or null if none" }
             }
         },
-        "Nutrient": {
+        "Exercise": {
             "type": "object",
             "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "amount": {
-                    "type": "string"
-                }
+                "id":          { "type": "string" },
+                "note":        { "type": "string", "x-nullable": true },
+                "date":        { "type": "string", "example": "2024-01-15 08:00:00" },
+                "name":        { "type": "string" },
+                "external_id": { "type": "string", "x-nullable": true },
+                "energy":      { "type": "number", "description": "Calories burned" },
+                "distance":    { "type": "number" },
+                "duration":    { "type": "number", "description": "Duration in seconds" },
+                "source":      { "type": "string", "x-nullable": true },
+                "gateway":     { "type": "string", "x-nullable": true },
+                "steps":       { "type": "number" }
+            }
+        },
+        "UserExercisesResponse": {
+            "type": "object",
+            "properties": {
+                "training":        { "type": "array", "items": { "$ref": "#/definitions/Exercise" } },
+                "custom_training": { "type": "array", "items": { "$ref": "#/definitions/Exercise" } }
+            }
+        },
+        "UserGoals": {
+            "type": "object",
+            "description": "Daily goals for the user",
+            "properties": {
+                "energy.energy":      { "type": "number", "description": "Calorie goal in kcal" },
+                "nutrient.protein":   { "type": "number", "description": "Protein goal in grams" },
+                "nutrient.fat":       { "type": "number", "description": "Fat goal in grams" },
+                "nutrient.carb":      { "type": "number", "description": "Carbohydrate goal in grams" },
+                "activity.step":      { "type": "number", "description": "Step count goal" },
+                "bodyvalue.weight":   { "type": "number", "description": "Target weight in kg" },
+                "water":              { "type": "number", "description": "Water intake goal in ml" }
+            }
+        },
+        "UserSettings": {
+            "type": "object",
+            "properties": {
+                "has_water_tracker":               { "type": "boolean" },
+                "has_diary_tipps":                 { "type": "boolean" },
+                "has_meal_reminders":              { "type": "boolean" },
+                "has_usage_reminders":             { "type": "boolean" },
+                "has_weight_reminders":            { "type": "boolean" },
+                "has_water_reminders":             { "type": "boolean" },
+                "consume_activity_calories":       { "type": "boolean" },
+                "has_feelings":                    { "type": "boolean" },
+                "has_fasting_tracker_reminders":   { "type": "boolean" },
+                "has_fasting_stage_reminders":     { "type": "boolean" }
+            }
+        },
+        "UserWeight": {
+            "type": "object",
+            "description": "Weight entry, or null if no entry exists for the given date.",
+            "properties": {
+                "id":          { "type": "string" },
+                "date":        { "type": "string", "example": "2024-01-15 08:00:00" },
+                "value":       { "type": "number", "x-nullable": true, "description": "Weight in kg" },
+                "external_id": { "type": "string", "x-nullable": true },
+                "gateway":     { "type": "string", "x-nullable": true },
+                "source":      { "type": "string", "x-nullable": true }
+            }
+        },
+        "UserSuggestedProduct": {
+            "type": "object",
+            "properties": {
+                "product_id":       { "type": "string" },
+                "amount":           { "type": "number", "description": "Amount in grams" },
+                "serving":          { "type": "string", "x-nullable": true },
+                "serving_quantity": { "type": "number", "x-nullable": true }
             }
         }
-    },
-    "securityDefinitions": {
-        "oauth2": {
-            "type": "oauth2",
-            "flow": "password",
-            "tokenUrl": "https://yzapi.yazio.com/v12/oauth/token",
-            "scopes": {}
-        }
-    },
-    "security": [
-        {
-            "oauth2": []
-        }
-    ]
+    }
 }

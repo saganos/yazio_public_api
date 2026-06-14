@@ -1,14 +1,13 @@
 const fetch = require("node-fetch");
 
-const body = `{
-    "client_id": "1_4hiybetvfksgw40o0sog4s884kwc840wwso8go4k8c04goo4c",
-    "client_secret": "6rok2m65xuskgkgogw40wkkk8sw0osg84s8cggsc4woos4s8o",
-    "username": "_LOGIN_EMAIL_",
-    "password": "_PASSWORD_",
-    "grant_type": "password"
-}`;
+const params = new URLSearchParams();
+params.append("client_id", "1_4hiybetvfksgw40o0sog4s884kwc840wwso8go4k8c04goo4c");
+params.append("client_secret", "6rok2m65xuskgkgogw40wkkk8sw0osg84s8cggsc4woos4s8o");
+params.append("username", "_LOGIN_EMAIL_");
+params.append("password", "_PASSWORD_");
+params.append("grant_type", "password");
 
-fetch('https://yzapi.yazio.com/v5/oauth/token', {method: 'post', body: body})
+fetch('https://yzapi.yazio.com/v15/oauth/token', { method: 'post', body: params })
   .then(response => {
     if (response.status === 200) {
       return response.json();
@@ -19,8 +18,8 @@ fetch('https://yzapi.yazio.com/v5/oauth/token', {method: 'post', body: body})
   .then(response => {
     console.debug(response);
   }).catch(error => {
-  console.error(error);
-});
+    console.error(error);
+  });
 
 /*
 Json response:

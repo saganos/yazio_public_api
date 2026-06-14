@@ -11,7 +11,7 @@ var requestOptions = {
   redirect: 'follow'
 };
 
-fetch('https://yzapi.yazio.com/v5/user', requestOptions)
+fetch('https://yzapi.yazio.com/v15/user', requestOptions)
   .then(response => {
     if (response.status === 200) {
       return response.json();
