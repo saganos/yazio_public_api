@@ -280,6 +280,24 @@
                 }
             }
         },
+        "/user/bodyvalues/weight": {
+            "get": {
+                "tags": ["bodyvalues"],
+                "summary": "Get weight history",
+                "description": "Returns every weight entry between two dates, oldest first. A single date may carry more than one entry.",
+                "security": [{ "oauth2": [] }],
+                "parameters": [
+                    { "name": "start", "in": "query", "required": true, "type": "string", "format": "date", "description": "e.g. 2024-01-01" },
+                    { "name": "end",   "in": "query", "required": true, "type": "string", "format": "date", "description": "e.g. 2024-12-31" }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Weight entries, oldest first. An empty list when the range holds none.",
+                        "schema": { "type": "array", "items": { "$ref": "#/definitions/UserWeightPoint" } }
+                    }
+                }
+            }
+        },
         "/user/bodyvalues/weight/last": {
             "get": {
                 "tags": ["bodyvalues"],
@@ -515,6 +533,14 @@
                 "has_feelings":                    { "type": "boolean" },
                 "has_fasting_tracker_reminders":   { "type": "boolean" },
                 "has_fasting_stage_reminders":     { "type": "boolean" }
+            }
+        },
+        "UserWeightPoint": {
+            "type": "object",
+            "description": "One entry from the weight history endpoint. Carries fewer fields than UserWeight.",
+            "properties": {
+                "date":  { "type": "string", "example": "2024-01-15 08:00:00" },
+                "value": { "type": "number", "description": "Weight in kg" }
             }
         },
         "UserWeight": {

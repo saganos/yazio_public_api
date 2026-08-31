@@ -67,3 +67,13 @@ node examples/get_diary.js
 ```
 
 [get_diary.js](examples/get_diary.js) - Get consumed items (food diary) for a given date
+
+----
+### Get weight history ###
+```bash
+node examples/get_weight_history.js
+```
+
+[get_weight_history.js](examples/get_weight_history.js) - Get every weight entry between two dates
+
+ℹ️ `GET /user/bodyvalues/weight?start=&end=` returns the whole history in one request. It is not the same endpoint as `/user/bodyvalues/weight/last`, which returns a single entry. (`/user/bodyvalues/weight/range` also answers `200`, but with an empty list.)
